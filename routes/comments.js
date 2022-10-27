@@ -1,0 +1,15 @@
+const {Router} = require('express')
+const router = Router()
+const controller = require('../controller/comments')
+
+router.post('/', controller.createComment)
+router.get('/:postId', controller.getComments)
+router.put('/like', controller.likeComment)
+router.put('/unLike', controller.unLike)
+router.put('/addReply', controller.addReply)
+router.put('/updateReply', controller.updateReply)
+router.delete('/deleteReply', controller.deleteReply)
+router.get('/findUser/:id', controller.findUser)
+router.put('/updateComment', controller.updateComment)
+router.delete('/', controller.deleteComment)
+module.exports= router
