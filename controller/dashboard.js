@@ -41,7 +41,15 @@ module.exports = {
         }
         
     },
+    chooseProfilePicture : async(req, res) => {
+
+        const id = req.params.id
+        console.log('this is the file',req.file)
+        const url = await bucket.uploadProfileImage(req.file, id)
+        console.log(url)
+    },
     getProfileUserPosts : async(req, res) =>{
+
         const resolver = Resolver(res) 
          const userId = ObjectId(req.params.userId)
          console.log(userId)

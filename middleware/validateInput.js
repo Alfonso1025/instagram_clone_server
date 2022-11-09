@@ -15,21 +15,21 @@ module.exports = function(req,res,next){
 
         if(![userName, email, password].every(Boolean)){ 
 
-            return resolver.badRequest(null, 'missing credencials')
+            return resolver.badRequest(null, 'missing_credencials')
         }
 
         else if(!validateEmail(email)){
 
-            return resolver.badRequest(email, 'invalid email')
+            return resolver.badRequest(email, 'invalid_email')
         }
     }
     
     else if(req.path === '/loginUser'){
         if(![email, password].every(Boolean)){
-            return resolver.unauthorized(null, 'mssing credentials')
+            return resolver.badRequest(null, 'missing_credentials')
         }
         else if(!validateEmail(email)){
-            return resolver.badRequest(email, 'invalid email')
+            return resolver.badRequest(email, 'invalid_email')
         }
     
     }

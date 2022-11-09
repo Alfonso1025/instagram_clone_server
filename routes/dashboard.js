@@ -2,6 +2,8 @@ const {Router} = require('express')
 const router = Router()
 const controller = require('../controller/dashboard')
 const authorization = require('../middleware/authorization')
+const multer= require('multer')
+const upload= multer({dest:'uploads'})
 
 
 router.get('/verifyToken', authorization, controller.verifyToken)
@@ -50,7 +52,7 @@ router.get('/getUser', authorization, controller.getUser)
  *      500:
  *        description: server error
  */
-
+router.post('/chooseProfilePic', upload.single('file') , controller.chooseProfilePicture)
 router.get('/getProfilePosts/:userId', controller.getProfileUserPosts)
 router.put('/followUser', controller.followUser)
 router.get('/getFollowers/:userId', controller.getFollowers)

@@ -22,7 +22,16 @@ const s3= new S3({
 module.exports = {
 
    
-   
+   uploadProfileImage : async (file, id)=>{
+        const fileStream = fs.createReadStream(file.path)
+        const profileKey = 'testing'
+        const uploadParams = {
+            Bucket: bucketName,
+            Body: fileStream,
+            Key: profileKey
+        }
+        return s3.upload(uploadParams).promise()
+   },
     uploadMultipleImagesAws :  async (filesArray) =>{
 
         const insertedObjetsArray = []

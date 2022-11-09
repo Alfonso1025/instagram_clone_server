@@ -137,7 +137,7 @@ router.delete('/', controller.deletePost)
  *        description: server error
  */
 
-router.get('/testFindLast', controller.findLast)
+router.put('/testFindLast', controller.findLast)
 
 
 module.exports = router

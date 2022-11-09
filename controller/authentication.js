@@ -24,7 +24,7 @@ module.exports = {
                     {userEmail : email}
                 ).toArray()
                 
-            if(existingUser.length > 0) return resolver.badRequest(existingUser, 'user already exist redirect to login')
+            if(existingUser.length > 0) return resolver.badRequest(existingUser, 'existing_user')
         
             const saltRound =10
             const salt= await bcrypt.genSalt(saltRound)
@@ -66,16 +66,14 @@ module.exports = {
             const loggedUser = await client.db('instagram').collection('users').findOne(
                 {userEmail : email}, async(error, result) =>{
 
-                    if(error) return resolver.internalServerError(error, '')
-                    if (result === null || result === undefined) return resolver.unauthorized(result, 'user not found')
+                    if(error) return resolver.internalServerError(null, 'mongodb error')
+                    if (result === null || result === undefined) return resolver.unauthorized(null, 'user_not_found')
                    
                     const validPassword = await bcrypt.compare(password, result.password)
-                    if(!validPassword) return resolver.unauthorized(password, 'incorrect password')
+                    if(!validPassword) return resolver.unauthorized(null, 'incorrect_password')
 
                     const token = jwtGenerator(result._id)
                     
-                    //let decodedJwt = jwt.decode(token, {complete : true})
-                    //res.send(decodedJwt)
                     return resolver.success({user : result, token}, 'user found and token produced') 
                 }
             )

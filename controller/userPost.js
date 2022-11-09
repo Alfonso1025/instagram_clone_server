@@ -180,17 +180,20 @@ deletePost : async( req, res ) => {
 },
 findLast : async(req, res) =>{
    await client.connect()
+   const addNewField = await client.db('instagram').collection('users').updateMany(
+    {}, {$set : {"profilePicture":''}}, {upsert: false}, {multiPost: true}
+   )
    //const query = await client.db('instagram').collection('userPost').find({}).toArray()
    //const last = query[query.length-1]._id
-  const query = await client.db('instagram').collection('userPost')
+  /*  const query = await client.db('instagram').collection('userPost')
   .findOne({_id : new ObjectId('62fbb18f2c1c756bb7936d97')}, (error, data)=>{
       if(error){
         console.log(error)
         return res.send(error.message)
       } 
       console.log(data)
-      return res.send(data)
-  })
+      return res.send(data) 
+  }) */
    
 }
 }
