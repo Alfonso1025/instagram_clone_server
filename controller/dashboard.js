@@ -42,11 +42,25 @@ module.exports = {
         
     },
     chooseProfilePicture : async(req, res) => {
+        console.log('tghis is the file',req.file)
+        console.log('this is the body',req.body.file)
 
-        const id = req.params.id
-        console.log('this is the file',req.file)
-        const url = await bucket.uploadProfileImage(req.file, id)
-        console.log(url)
+        
+        try {
+            const userId = req.user//get this from authorization middleware
+            const upload = await bucket.uploadProfileImage(req.file)
+            const key = upload.Key
+            await client.connect()
+            const storeKeyToImage = await client.db('instagram_clone').collection('users').updateOne(
+                {_id : userId}, {$set : {profilePicture : key }}
+            )
+
+        } catch (error) {
+            
+        }
+       
+
+       console.log('this is the url', url)
     },
     getProfileUserPosts : async(req, res) =>{
 

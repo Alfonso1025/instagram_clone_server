@@ -1,4 +1,4 @@
-const resolver = require('../services/resolver')
+
 const Resolver = require('../services/resolver')
 
 module.exports = function(req,res,next){

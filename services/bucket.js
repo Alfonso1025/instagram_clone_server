@@ -23,7 +23,9 @@ module.exports = {
 
    
    uploadProfileImage : async (file, id)=>{
-        const fileStream = fs.createReadStream(file.path)
+    
+        
+        const fileStream = fs.createReadStream(file.uri)
         const profileKey = 'testing'
         const uploadParams = {
             Bucket: bucketName,
