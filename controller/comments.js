@@ -6,14 +6,14 @@ const client = require('../services/db')
 module.exports = {
     createComment : async (req, res)=>{
         const resolver = Resolver(res)
-        
-        
         try {
             
             const postId = req.body.relatedPost
             const userId = req.body.commentByUser
             const userName = req.body.userName
             const content = req.body.content
+
+            console.log('recived postId: ', postId)
             //guarantee that the postId actually belongs to an existing post in db.
             
             await client.connect()
@@ -48,16 +48,17 @@ module.exports = {
    getComments : async (req, res)=>{
        const resolver = Resolver(res)
        try {
-           const postId = new ObjectId(req.params.postId)
-          
+           
            await client.connect()
            const getAllComments = await  client.db('instagram').collection('comments').find(
                {
-                   relatedPost : postId
+                   relatedPost : req.params.postId
                }
            ).toArray()
-          return res.send(getAllComments)
-
+           if(getAllComments.length == 0) return resolver.success(getAllComments, 'no_comments_yet')
+           else if(getAllComments.length > 0) return resolver.success(getAllComments, 'comments_retrieved')
+           
+           
        } 
        catch (error) {
            resolver.badRequest(error.name, error.message)
@@ -154,7 +155,6 @@ module.exports = {
        
        try {
             const commentId = new ObjectId(req.body.commentId)
-            console.log(commentId)
             const contentReply = req.body.content
             const userId =  req.body.userId
             const userName = req.body.userName

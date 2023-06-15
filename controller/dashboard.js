@@ -43,24 +43,59 @@ module.exports = {
     },
     chooseProfilePicture : async(req, res) => {
         console.log('tghis is the file',req.file)
-        console.log('this is the body',req.body.file)
-
+       
+        const resolver = Resolver(res)
         
         try {
-            const userId = req.user//get this from authorization middleware
+            const userId = new ObjectId(req.user)//get this from authorization middleware
+            if(!req.file) return resolver.badRequest(null,'no_file_sent')
             const upload = await bucket.uploadProfileImage(req.file)
+            if(!upload.Key) return resolver.internalServerError(null, 'aws_error')
             const key = upload.Key
+           
             await client.connect()
-            const storeKeyToImage = await client.db('instagram_clone').collection('users').updateOne(
+            const storeKeyToImage = await client.db('instagram').collection('users').updateOne(
                 {_id : userId}, {$set : {profilePicture : key }}
             )
-
-        } catch (error) {
+            if(storeKeyToImage.acknowledged != true || storeKeyToImage.modifiedCount != 1) return resolver.badRequest(storeKeyToImage,'could_not_store_key')
             
+        } catch (error) {
+            console.log(error)
+            resolver.internalServerError(error, 'server error')
         }
        
 
-       console.log('this is the url', url)
+       
+    },
+    downloadProfilePicture : async (req, res)=>{
+        const resolver = Resolver(res)
+        try {
+            const userId = new ObjectId(req.user)
+            await client.connect()
+            const findKey = await client.db('instagram').collection('users').findOne( {_id: userId},
+                async(error, result) =>{
+                    if(error) return resolver.internalServerError(error, 'mongodb error')
+                    if(result === null) resolver.badRequest(null, 'the id is incorrect. No user found')
+                    const key = result.profilePicture
+                    const readStream = await bucket.downloadProfilePicture(key).then(url=> {
+                        
+                        resolver.success(url, 'image_url')
+                    })
+                        .catch(error=>{
+                            resolver.internalServerError(error, 'aws_error')
+                        } )
+
+                }
+                )
+            
+            
+            
+
+        } catch (error) {
+            console.log(error)
+            resolver.internalServerError(error, 'aws_error')
+        }
+        
     },
     getProfileUserPosts : async(req, res) =>{
 
@@ -73,7 +108,7 @@ module.exports = {
             { postedByUser : userId}
          ).toArray()
          
-         if(userPostsArray === undefined || userPostsArray.length ===0) return resolver.internalServerError(userPostsArray, 'mongodb error')
+         if(userPostsArray.length ===0) return resolver.success(userPostsArray, 'no_posts_found')
         
          console.log(userPostsArray)
         
@@ -86,7 +121,9 @@ module.exports = {
             postsArray.push({ 
                 postId : userPostsArray[i]._id,   
                 contentString : userPostsArray[i].contentPost.contentString,
-                arrayUrls
+                author : userPostsArray[i].author,
+                arrayUrls,
+                likes : userPostsArray[i].likes
                 })
 
         }

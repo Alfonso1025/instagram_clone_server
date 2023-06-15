@@ -80,6 +80,7 @@ module.exports = {
         } 
         catch (error) {
             console.log(error)
+            return resolver.internalServerError(error, error.message)
         }
 
     }

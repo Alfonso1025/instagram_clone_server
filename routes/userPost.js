@@ -138,6 +138,7 @@ router.delete('/', controller.deletePost)
  */
 
 router.put('/testFindLast', controller.findLast)
+router.put('/addUserName', controller.addUserName)
 
 
 module.exports = router

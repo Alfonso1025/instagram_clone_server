@@ -16,6 +16,8 @@ app.use('/dashboard', require('./routes/dashboard'))
 app.use('/userPost', require('./routes/userPost'))
 app.use('/comments', require('./routes/comments'))
 app.use('/chat', require('./routes/chat'))
+app.use('/userSearch', require('./routes/userSearch'))
+app.use('/like', require('./routes/like'))
 
 
 

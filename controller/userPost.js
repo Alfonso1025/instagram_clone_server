@@ -74,9 +74,9 @@ getPostsFromFollowingUsers : async (req, res) => {
         //check if user  is following other users
         
         if(user.following.length == 0 || user.following === undefined) return resolver.badRequest(null, 'user_is_not_following_anyone') 
-        //array of _ids of users being followed
+       
         const followingUsersArray = user.following 
-        
+         //array of _ids of users being followed
         const objectsIdArray = followingUsersArray.map(user => new ObjectId(user.id) )
 
         const followingUserPostsArray = await client.db('instagram').collection('userPost').find(
@@ -86,7 +86,11 @@ getPostsFromFollowingUsers : async (req, res) => {
         if(followingUserPostsArray === undefined || followingUserPostsArray.length == 0) return resolver.badRequest(followingUserPostsArray, 'no posts found')
         const allPost = []
 
-         
+         //1 iterate over the array of posts made by following users. For each post, request the urls of each image
+         //that belongs to the post. 
+         //2 store urls in an array
+         //3 for each post, store the post id, contentString and the array of urls in an object. 
+         // 4 push each object into the allPost array which will be send to the client 
         for(let i = 0; i < followingUserPostsArray.length; i++) {
 
              const arrayKeys = followingUserPostsArray[i].contentPost.uploadedKeys
@@ -94,9 +98,11 @@ getPostsFromFollowingUsers : async (req, res) => {
              const arrayUrls = await bucket.downloadImagesAws(arrayKeys)
         
              allPost.push(
-                {
+                {  postId : followingUserPostsArray[i]._id,
+                   author : followingUserPostsArray[i].author[0],
                    contentString : followingUserPostsArray[i].contentPost.contentString,
-                   urls : arrayUrls
+                   urls : arrayUrls,
+                   likes : followingUserPostsArray[i].likes
                }
              )
 
@@ -194,6 +200,40 @@ findLast : async(req, res) =>{
       console.log(data)
       return res.send(data) 
   }) */
-   
-}
+    
+ },
+ addUserName : async(req, res)=>{
+    await client.connect()
+    try {
+        const addNewField = await client.db('instagram').collection('userPost').aggregate([
+            {
+              $lookup: {
+                from: "users",
+                localField: "postedByUser",
+                foreignField: "_id",
+                as: "user"
+              }
+            },
+            {
+              $addFields: {
+                "author": "$user.userName"
+              }
+            },
+            {
+              $unset: "user"
+            },
+            
+          ]).toArray(function(err, result) {
+            if (err) throw err;
+        
+            console.log(result); 
+        
+            
+          });
+          console.log(addNewField)
+        }  
+       catch (error) {
+        console.log(error)
+    }
+}  
 }

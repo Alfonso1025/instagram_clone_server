@@ -20,10 +20,12 @@ const io = new Server(serverSocket, {
     
         })
         socket.on('send', async(messageObject) =>{
-            console.log(messageObject)
+            console.log('message data', messageObject)
             socket.to(messageObject.roomId).emit('receive_message', messageObject)
             await client.connect()
+
            const newMessage = await client.db('instagram').collection('chat').updateOne(
+
                 {_id : new ObjectId(messageObject.roomId) }, {$addToSet : { messages : { 
                     author : messageObject.author,
                     content : messageObject.content,

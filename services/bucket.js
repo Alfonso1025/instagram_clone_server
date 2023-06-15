@@ -22,17 +22,25 @@ const s3= new S3({
 module.exports = {
 
    
-   uploadProfileImage : async (file, id)=>{
+   uploadProfileImage : async (file)=>{
     
         
         const fileStream = fs.createReadStream(file.uri)
-        const profileKey = 'testing'
         const uploadParams = {
             Bucket: bucketName,
             Body: fileStream,
-            Key: profileKey
+            Key: file.originalname
         }
         return s3.upload(uploadParams).promise()
+   },
+   downloadProfilePicture : async(key) =>{
+    
+    const downloadParams = {
+           Key:key,
+           Bucket:bucketName
+         }
+         const data =   s3.getSignedUrlPromise('getObject', downloadParams);
+         return data
    },
     uploadMultipleImagesAws :  async (filesArray) =>{
 
