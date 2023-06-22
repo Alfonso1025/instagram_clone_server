@@ -1,6 +1,6 @@
-
- const app = require('./server')
+const app = require('./server')
  const client = require('./services/db')
+const ObjectId= require('mongodb').ObjectId
 const serverSocket = require('http').createServer(app)
 const {Server} = require('socket.io')
 const io = new Server(serverSocket, {
@@ -20,12 +20,11 @@ const io = new Server(serverSocket, {
     
         })
         socket.on('send', async(messageObject) =>{
-            console.log('message data', messageObject)
+            console.log('message data: ',messageObject)
             socket.to(messageObject.roomId).emit('receive_message', messageObject)
             await client.connect()
 
-           const newMessage = await client.db('instagram').collection('chat').updateOne(
-
+         const newMessage = await client.db('instagram').collection('chat').updateOne(
                 {_id : new ObjectId(messageObject.roomId) }, {$addToSet : { messages : { 
                     author : messageObject.author,
                     content : messageObject.content,
@@ -33,17 +32,12 @@ const io = new Server(serverSocket, {
                 }}}
             )
             console.log(newMessage)
-            
+
         })
         socket.on('disconnect', ()=>{
             console.log('user disconnected : ', socket.id)
         })
-        
+
     })
     
     module.exports = serverSocket
-   
-
-     
-
-

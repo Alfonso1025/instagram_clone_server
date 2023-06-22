@@ -35,10 +35,13 @@ module.exports = {
             const participantId = req.params.participantId
             await client.connect()
             const allRooms = await client.db('instagram').collection('chat').find(
-                {participants: {
-                    $elemMatch : {id : participantId}
-                } }
+               { $or: [
+                    { "participants.userId": participantId },
+                    { "participants.friendId": participantId }
+                    ]
+               }
             ).toArray()
+            console.log(allRooms)
             if(allRooms.length < 1  || allRooms[0] == undefined) return resolver.badRequest(allRooms, 'could_not_find_rooms')
             return resolver.success(allRooms, 'found_all_rooms')
         } 

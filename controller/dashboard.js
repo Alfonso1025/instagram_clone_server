@@ -42,7 +42,7 @@ module.exports = {
         
     },
     chooseProfilePicture : async(req, res) => {
-        console.log('tghis is the file',req.file)
+        console.log('this is the file',req.file)
        
         const resolver = Resolver(res)
         

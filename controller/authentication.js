@@ -7,10 +7,11 @@ const jwt=require('jsonwebtoken')
 module.exports = {
 
     registerUser : async (req, res) => {
+        const resolver = Resolver(res)
 
          try {
             
-            const resolver = Resolver(res)
+            
         
             
             const userName = req.body.userName
@@ -24,7 +25,7 @@ module.exports = {
                     {userEmail : email}
                 ).toArray()
                 
-            if(existingUser.length > 0) return resolver.badRequest(existingUser, 'existing_user')
+            if(existingUser.length > 0) return resolver.conflict(existingUser, 'existing_user')
         
             const saltRound =10
             const salt= await bcrypt.genSalt(saltRound)
@@ -51,6 +52,7 @@ module.exports = {
          } 
          catch (error) {
              console.log(error)
+             return resolver.internalServerError(null,error.message )
          }
      
         
@@ -67,7 +69,7 @@ module.exports = {
                 {userEmail : email}, async(error, result) =>{
 
                     if(error) return resolver.internalServerError(null, 'mongodb error')
-                    if (result === null || result === undefined) return resolver.unauthorized(null, 'user_not_found')
+                    if (result === null || result === undefined) return resolver.badRequest(null, 'user_not_found')
                    
                     const validPassword = await bcrypt.compare(password, result.password)
                     if(!validPassword) return resolver.unauthorized(null, 'incorrect_password')

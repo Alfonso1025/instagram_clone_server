@@ -11,7 +11,7 @@ router.post('/registerUser',  validateInput, controller.registerUser)
  *  post:
  *     tags:
  *     - Authentication
- *     summary: Save user info to database
+ *     summary: Registers a new user and creates and accout for the new user. 
  *     requestBody:
  *      required: true
  *      content:
@@ -34,10 +34,10 @@ router.post('/registerUser',  validateInput, controller.registerUser)
  *     responses:
  *      200:
  *        description: user inserted in database
- *      400:
- *        description: bad request
+ *      409:
+ *        description: conflict the user already has an account
  *      500:
- *        description: server error
+ *        description: Internal server error. Normally produced by a mongodb connection issue
  */
 router.post('/loginUser', validateInput, controller.loginUser )
 
@@ -47,7 +47,7 @@ router.post('/loginUser', validateInput, controller.loginUser )
  *  post:
  *     tags:
  *     - Authentication
- *     summary: Find user by email and produce a token 
+ *     summary: Finds an existing user in the db by email and validates the password. Over success, returns a token to the client
  *     requestBody:
  *      required: true
  *      content:
@@ -68,13 +68,13 @@ router.post('/loginUser', validateInput, controller.loginUser )
  *                type : string
  *     responses:
  *      200:
- *        description: user provided valid credentials. User was found in db. A token was produced
+ *        description: Success - User provided valid credentials. The account was found. A token was produced and returned to the client
  *      400:
- *        description: bad request
+ *        description: Bad request - The email provided by the user cannot be found in the db.
  *      401:
- *        description: user unauthorizedcd 
+ *        description: Unauthorized - The password is invalid
  *      500:
- *        description: server error
+ *        description: Internal server error - Typically caused by a mongodb connection issue. 
  */
 
 module.exports = router

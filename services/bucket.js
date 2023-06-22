@@ -24,13 +24,16 @@ module.exports = {
    
    uploadProfileImage : async (file)=>{
     
+       
         
-        const fileStream = fs.createReadStream(file.uri)
+        const fileStream = fs.createReadStream(file.path)
+        console.log('gathering upload params')
         const uploadParams = {
             Bucket: bucketName,
             Body: fileStream,
             Key: file.originalname
         }
+        console.log('ready to send')
         return s3.upload(uploadParams).promise()
    },
    downloadProfilePicture : async(key) =>{

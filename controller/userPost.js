@@ -70,10 +70,10 @@ getPostsFromFollowingUsers : async (req, res) => {
         const user = await client.db('instagram').collection('users').findOne(
             { _id : userId }
             )
-        if(user === undefined || user === null) return resolver.badRequest(user, 'could not find user')
+        if(user === undefined || user === null) return resolver.badRequest(null, 'could not find user')
         //check if user  is following other users
         
-        if(user.following.length == 0 || user.following === undefined) return resolver.badRequest(null, 'user_is_not_following_anyone') 
+        if(user.following.length === 0) return resolver.success(null, 'user_is_not_following_anyone') 
        
         const followingUsersArray = user.following 
          //array of _ids of users being followed
