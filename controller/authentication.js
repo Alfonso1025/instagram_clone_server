@@ -43,7 +43,7 @@ module.exports = {
         
                     },
                     (error, result) => {
-                        if(error) return resolver.internalServerError('mongodb error', error)
+                        if(error) return resolver.internalServerError('mongodb_error', error)
                         
                         return resolver.success(result, ' new user inserted')
                     }
@@ -67,15 +67,17 @@ module.exports = {
             await client.connect()
             const loggedUser = await client.db('instagram').collection('users').findOne(
                 {userEmail : email}, async(error, result) =>{
-
+                    //500
                     if(error) return resolver.internalServerError(null, 'mongodb error')
-                    if (result === null || result === undefined) return resolver.badRequest(null, 'user_not_found')
+                    //401
+                    if (result === null || result === undefined) return resolver.unauthorized(null, 'user_not_found')
                    
                     const validPassword = await bcrypt.compare(password, result.password)
+                    //401
                     if(!validPassword) return resolver.unauthorized(null, 'incorrect_password')
 
                     const token = jwtGenerator(result._id)
-                    
+                    //200
                     return resolver.success({user : result, token}, 'user found and token produced') 
                 }
             )

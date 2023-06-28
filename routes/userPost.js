@@ -13,7 +13,7 @@ router.post('/multiple', multer.array('multiInputFile'), controller.multiPost)
  * '/userPost/multiple':
  *  post:
  *     tags:
- *     - createPost
+ *     - UserPost
  *     summary: saves contentString to db and uploads multimedia to aws
  *     requestBody:
  *      required: true
@@ -21,6 +21,10 @@ router.post('/multiple', multer.array('multiInputFile'), controller.multiPost)
  *        multipart/form-data:
  *           schema:
  *            type: object
+ *            required:
+ *              - date
+ *              - contentString
+ *              - userId
  *            
  *            properties:
  *              
@@ -39,11 +43,62 @@ router.post('/multiple', multer.array('multiInputFile'), controller.multiPost)
  *     responses:
  *      200:
  *        description: The conntentString was saved to db and multimedia content was uploaded to aws.
+ *        content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum: 
+ *                     - followers_and_following_updated
+ *                 data:
+ *                   type: object
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                    - 200
+ *      
  *      400:
- *        description: bad request
+ *         description: Bad request due to the request missing one of the following elements An image file, date or userId.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum: 
+ *                     - missing_files/missig_required_field
+ *                 data:
+ *                   type: object
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                    - 400
+ * 
  *       
  *      500:
- *        description: server error
+ *        description: Internal server error. Mongo db or aws s3 bucket error
+ *        content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum: 
+ *                    - mongodb_error
+ *                 data:
+ *                   type: object
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                    - 500
+ 
  */
 router.get('/getPostsFromFollowingUsers/:userId', controller.getPostsFromFollowingUsers)
 /**
@@ -51,7 +106,7 @@ router.get('/getPostsFromFollowingUsers/:userId', controller.getPostsFromFollowi
  * '/userPost/getPostsFromFollowingUsers/{userId}':
  *  get:
  *     tags:
- *     - get fee
+ *     - UserPost
  *     summary: retrives posts made by users followed by logged in user
  *     parameters:
  *     - in : path
@@ -73,7 +128,7 @@ router.put('/', controller.updatePost)
  * '/userPost':
  *  put:
  *     tags:
- *     - updatePost
+ *     - UserPost
  *     summary: Edits the content string in a post
  *     requestBody:
  *      required: true
@@ -108,7 +163,7 @@ router.delete('/', controller.deletePost)
  * '/userPost':
  *  delete:
  *     tags:
- *     - delete
+ *     - UserPost
  *     summary: deletes a post from db and related objects from aws bucket
  *     requestBody:
  *      required: true

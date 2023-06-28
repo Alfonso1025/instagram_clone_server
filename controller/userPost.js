@@ -12,25 +12,21 @@ multiPost : async (req, res) => {
 
     const resolver = Resolver(res)
     try {
-        if(req.files === [] || !req.files){
+        if(req.files === [] || !req.files) return resolver.badRequest(req.files, 'missing_files')
+        if(date === undefined || userId === undefined || contentString === undefined) return resolver.badRequest(null, 'missing_required_field')
+         
+        const uploads = await bucket.uploadMultipleImagesAws(req.files)
+        console.log('this is uploads',uploads)
+        if (!Array.isArray(uploads)) return resolver.internalServerError(null, 'aws_error')
+        if (uploads.length < 1) return resolver.internalServerError(null, 'aws_error')
+        const uploadedKeys = uploads.map(object => {return  object.key})
             
-            return resolver.badRequest(req.files, 'did not make it')
-        } 
-        else if(req.files) {
-
-            const uploads = await bucket.uploadMultipleImagesAws(req.files)
-            console.log(uploads)
-        
-            const uploadedKeys = uploads.map(object => {return  object.key})
+        const userId = ObjectId( req.body.userId )
+        const contentString = req.body.contentString
+        const date = req.body.date
             
-            
-           
-            const userId = ObjectId( req.body.userId )
-            const contentString = req.body.contentString
-            const date = req.body.date
-            if(date === undefined || userId === undefined) return resolver.badRequest(null, 'missing userId or date or content')
-            await client.connect()
-             client.db('instagram').collection('userPost').insertOne(
+        await client.connect()
+          client.db('instagram').collection('userPost').insertOne(
                {
                  postedByUser : userId,
                  contentPost : {
@@ -44,17 +40,13 @@ multiPost : async (req, res) => {
                (error, result) =>{
                    if(error) return resolver.internalServerError(error,'mongo db error')
                    console.log('this is the post inserted', result)
-                   return resolver.success(result, 'post inserted')
+                   return resolver.success(result, 'post_inserted')
                }
            )   
            
-        }
-        
-         
-
     } catch (error) {
         console.log(error)
-        return resolver.badRequest(error.name, error.message)
+        return resolver.internalServerError(error, error.message)
     }
 },
 

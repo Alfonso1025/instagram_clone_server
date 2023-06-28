@@ -11,7 +11,7 @@ router.post('/registerUser',  validateInput, controller.registerUser)
  *  post:
  *     tags:
  *     - Authentication
- *     summary: Registers a new user and creates and accout for the new user. 
+ *     summary: Registers a new user and creates and accout for the new user.Adding the userId and userName of of the friend to be followed. It also updates the field  
  *     requestBody:
  *      required: true
  *      content:
@@ -33,11 +33,83 @@ router.post('/registerUser',  validateInput, controller.registerUser)
  *                type : string
  *     responses:
  *      200:
- *        description: user inserted in database
+ *         description: User account created successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum: 
+ *                     - new user inserted
+ *                 data:
+ *                   type: object
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                    - 200
+ *      
+ *      400:
+ *         description: "Bad request. Two posibilities 1.- Missing credentials. Make sure to include a string email and password in the request. 2.- Invalid email format. An example of a valid email format is jean@gmail.com"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum: 
+ *                    - missing credentials
+ *                    - invalid email
+ *                 data:
+ *                   type: string
+ *                   enum: 
+ *                     - null
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                   - 400
+ *                 
  *      409:
- *        description: conflict the user already has an account
+ *         description: Conflict- The user already has an account.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum: 
+ *                     - existing_user
+ *                 data:
+ *                   type: object
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                    - 409 
+ *        
  *      500:
- *        description: Internal server error. Normally produced by a mongodb connection issue
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum: 
+ *                    - mongodb_error
+ *                 data:
+ *                   type: object
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                    - 500
  */
 router.post('/loginUser', validateInput, controller.loginUser )
 
@@ -68,13 +140,82 @@ router.post('/loginUser', validateInput, controller.loginUser )
  *                type : string
  *     responses:
  *      200:
- *        description: Success - User provided valid credentials. The account was found. A token was produced and returned to the client
+ *         description: Succesful login. A jason web token was produced and sent to the client.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum: 
+ *                    - user found and token produced
+ *                 data:
+ *                   type: object
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                    - 200
  *      400:
- *        description: Bad request - The email provided by the user cannot be found in the db.
+ *         description: "Bad request. Two posibilities 1.- Missing credentials. Make sure to include a string email and password in the request. 2.- Invalid email format. An example of a valid email format is jean@gmail.com"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum: 
+ *                    - missing credentials
+ *                    - invalid email
+ *                 data:
+ *                   type: string
+ *                   enum: 
+ *                     - null
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                   - 400
+ *            
  *      401:
- *        description: Unauthorized - The password is invalid
+ *         description: Bad request. The email provided cannot be found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum: 
+ *                    - user_not_found
+ *                 data:
+ *                   type: string
+ *                   enum: 
+ *                     - null
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                    - 401
+ *        
  *      500:
- *        description: Internal server error - Typically caused by a mongodb connection issue. 
+ *         description: Internal server error - Typically caused by a mongodb connection issue.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                    - 500 
  */
 
 module.exports = router

@@ -31,13 +31,14 @@ module.exports = {
            }, (error, result) => {
 
                if(error) return resolver.internalServerError(error, 'mongodb error')
-               if(result === null) resolver.badRequest(null, 'the id is incorrect. No user found')
+               if(result === null) resolver.notFound(null, 'could_not_find_user')
                
-               return resolver.success(result, 'user found in dashboard')
+               return resolver.success(result, 'user_info_retrieved')
            })
         } 
         catch (error) {
-            resolver.internalServerError(error, 'server error')
+            console.log('error from get user', error)
+            resolver.internalServerError(error, error.message)
         }
         
     },
@@ -49,19 +50,22 @@ module.exports = {
         try {
             const userId = new ObjectId(req.user)//get this from authorization middleware
             if(!req.file) return resolver.badRequest(null,'no_file_sent')
+            //upload image to s3 bucket
             const upload = await bucket.uploadProfileImage(req.file)
+            //obtain key to image in s3 bucket
             if(!upload.Key) return resolver.internalServerError(null, 'aws_error')
             const key = upload.Key
            
             await client.connect()
+            //store key to image in the database
             const storeKeyToImage = await client.db('instagram').collection('users').updateOne(
                 {_id : userId}, {$set : {profilePicture : key }}
             )
-            if(storeKeyToImage.acknowledged != true || storeKeyToImage.modifiedCount != 1) return resolver.badRequest(storeKeyToImage,'could_not_store_key')
-            
+            if(storeKeyToImage.acknowledged != true || storeKeyToImage.modifiedCount != 1) return resolver.notFound(storeKeyToImage,'could_not_store_key')
+            return resolver.success(storeKeyToImage,'profile_pic_uploaded')
         } catch (error) {
             console.log(error)
-            resolver.internalServerError(error, 'server error')
+            resolver.internalServerError(error,error.message)
         }
        
 
@@ -74,9 +78,12 @@ module.exports = {
             await client.connect()
             const findKey = await client.db('instagram').collection('users').findOne( {_id: userId},
                 async(error, result) =>{
+
                     if(error) return resolver.internalServerError(error, 'mongodb error')
-                    if(result === null) resolver.badRequest(null, 'the id is incorrect. No user found')
+                    if(result === null) resolver.notFound(null, 'incorrect_id_no_user_found')
+                    if(result.profilePicture === "" || result.profilePicture === undefined) return resolver.notFound(null, 'user_does_not_have_profilepicture')
                     const key = result.profilePicture
+
                     const readStream = await bucket.downloadProfilePicture(key).then(url=> {
                         
                         resolver.success(url, 'image_url')
@@ -87,48 +94,52 @@ module.exports = {
 
                 }
                 )
-            
-            
-            
-
         } catch (error) {
             console.log(error)
-            resolver.internalServerError(error, 'aws_error')
+            resolver.internalServerError(error, error.message)
         }
         
     },
     getProfileUserPosts : async(req, res) =>{
-
-        const resolver = Resolver(res) 
-         const userId = ObjectId(req.params.userId)
-         console.log(userId)
-         await client.connect()
-         
-         const userPostsArray = await client.db('instagram').collection('userPost').find(
-            { postedByUser : userId}
-         ).toArray()
-         
-         if(userPostsArray.length ===0) return resolver.success(userPostsArray, 'no_posts_found')
+       const resolver = Resolver(res) 
+       try {
+      
+        const userId = ObjectId(req.params.userId)
+        console.log(userId)
+        await client.connect()
         
-         console.log(userPostsArray)
+        const userPostsArray = await client.db('instagram').collection('userPost').find(
+           { postedByUser : userId}
+        ).toArray()
         
-        const postsArray = []
+        if(userPostsArray.length === 0) return resolver.notFound(userPostsArray, 'no_posts_found')
+       
+        console.log(userPostsArray)
+       
+       const postsArray = []
 
-        for(let i = 0; i < userPostsArray.length; i++){
+       for(let i = 0; i < userPostsArray.length; i++){
 
-            const arrayKeys = userPostsArray[i].contentPost.uploadedKeys
-            const arrayUrls =   await bucket.downloadImagesAws(arrayKeys)
-            postsArray.push({ 
-                postId : userPostsArray[i]._id,   
-                contentString : userPostsArray[i].contentPost.contentString,
-                author : userPostsArray[i].author,
-                arrayUrls,
-                likes : userPostsArray[i].likes
-                })
+           const arrayKeys = userPostsArray[i].contentPost.uploadedKeys
+           const arrayUrls =   await bucket.downloadImagesAws(arrayKeys)
 
-        }
-     if(postsArray === undefined || postsArray === []) return resolver.badRequest(postsArray, 'no post were found')
-     return resolver.success(postsArray, 'User´s profile posts were retrieved succesfully')
+           postsArray.push({ 
+               postId : userPostsArray[i]._id,   
+               contentString : userPostsArray[i].contentPost.contentString,
+               author : userPostsArray[i].author,
+               arrayUrls,
+               likes : userPostsArray[i].likes
+               })
+
+       }
+    if(postsArray === undefined || postsArray === []) return resolver.badRequest(postsArray, 'no post were found')
+    return resolver.success(postsArray, 'user_profile_pots_succesfully_retrieved')
+        
+       } catch (error) {
+          console.log(error)
+          return resolver.internalServerError(error, error.message)
+       }
+        
         
     },
 
@@ -143,12 +154,12 @@ module.exports = {
         const userToBeFollowed = await client.db('instagram').collection('users').updateOne(
             {_id : userToFollowId}, {$addToSet : {followers : {id : userId, name : userName}} }
         ) 
-        if(userToBeFollowed.acknowledged != true) return resolver.badRequest(userToBeFollowed, 'could not update followers')
+        if(userToBeFollowed.acknowledged != true) return resolver.notFound(userToBeFollowed, 'could not update followers')
         
         const userFollowing = await client.db('instagram').collection('users').updateOne(
             {_id : userId}, {$addToSet : {following : {id : userToFollowId, name : userToFollowName}} }
         )
-        if(userFollowing.acknowledged != true) return resolver.badRequest(userToBeFollowed, 'could not update following')
+        if(userFollowing.acknowledged != true) return resolver.notFound(userToBeFollowed, 'could not update following')
         resolver.success({userToBeFollowed, userFollowing}, 'followers_and_following_updated')
     },
     getFollowers : async (req, res)=>{
@@ -162,10 +173,11 @@ module.exports = {
                 }
             )
             //it is possible that user has no followers. An empty array could be returned 
-            return resolver.success(followerUsers.followers, 'found folllowers')
+            if(followerUsers.followers.length < 1) return resolver.notFound(null, 'user_has_no_followers')
+            return resolver.success(followerUsers.followers, 'succesfully_retrieved_followers')
 
         } catch (error) {
-           return  resolver.badRequest(error.name, error.message)
+           return  resolver.internalServerError(error, error.message)
         }
     }
 }
