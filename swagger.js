@@ -12,7 +12,7 @@ const options = {
         version: '1.0.0',
       },
     },
-    apis: ['./routes/*.js', './controllers/*.js', 'authentication.js', 'dashboard.js', 'userPost.js','userSearch.js'],
+    apis: ['./routes/*.js', './controllers/*.js', 'authentication.js', 'dashboard.js', 'userPost.js','userSearch.js','chat.js'],
   }
   
 const swaggerSpec = swaggerJsdoc(options)

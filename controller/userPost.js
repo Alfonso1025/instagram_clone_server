@@ -62,10 +62,10 @@ getPostsFromFollowingUsers : async (req, res) => {
         const user = await client.db('instagram').collection('users').findOne(
             { _id : userId }
             )
-        if(user === undefined || user === null) return resolver.badRequest(null, 'could not find user')
+        if(user === undefined || user === null) return resolver.notFound(null, 'user_not_found')
         //check if user  is following other users
         
-        if(user.following.length === 0) return resolver.success(null, 'user_is_not_following_anyone') 
+        if(user.following.length === 0) return resolver.notFound(null, 'user_is_not_following_anyone') 
        
         const followingUsersArray = user.following 
          //array of _ids of users being followed
@@ -75,14 +75,15 @@ getPostsFromFollowingUsers : async (req, res) => {
            { postedByUser : {$in: objectsIdArray }}
             ).toArray()
 
-        if(followingUserPostsArray === undefined || followingUserPostsArray.length == 0) return resolver.badRequest(followingUserPostsArray, 'no posts found')
+        if(followingUserPostsArray === undefined || followingUserPostsArray.length == 0) return resolver.badRequest(followingUserPostsArray, 'no_posts_found')
         const allPost = []
 
-         //1 iterate over the array of posts made by following users. For each post, request the urls of each image
-         //that belongs to the post. 
-         //2 store urls in an array
-         //3 for each post, store the post id, contentString and the array of urls in an object. 
-         // 4 push each object into the allPost array which will be send to the client 
+         //1 iterate over the array of posts made by following users. 
+         //2 extract the the array of keys of the images stored in s3 bucket
+         //2 For each post, using the keys, request the urls of each image to aws s3 bucket
+         //3 store urls in an array
+         //4 for each post, store the post id, contentString and the array of urls in an object. 
+         //5 push each object into the allPost array which will be send to the client 
         for(let i = 0; i < followingUserPostsArray.length; i++) {
 
              const arrayKeys = followingUserPostsArray[i].contentPost.uploadedKeys
@@ -100,15 +101,15 @@ getPostsFromFollowingUsers : async (req, res) => {
 
 
         }
-      if( allPost.length == 0) return resolver.badRequest(null, 'could not get posts')
+      if( allPost.length === 0) return resolver.notFound(null, 'could not get posts')
       
-      return  resolver.success(allPost, `retrieved post from users followed by user ${user.userEmail}`)
+      return  resolver.success(allPost, `retrieved_post_from_users_followed_by_user_${user.userEmail}`)
       
       
     } 
     catch (error) {
      console.log(error)
-      return resolver.badRequest(error.name, error.message)
+      return resolver.internalServerError(error, error.message)
     }
      
     
@@ -119,13 +120,12 @@ updatePost : async(req, res) => {
 
 const resolver = Resolver(res)
     try {
-           //the error of passing a wrong id to new ObjectId() is handled in the catch block
+         if(req.body.postId === undefined) return resolver.badRequest( {contentToUpdate}, 'missing_postId')
+         if(req.body.contentToUpdate === undefined) return resolver.badRequest( {contentToUpdate}, 'missing_content')
            const postId = new ObjectId(req.body.postId)
         
            const contentToUpdate = req.body.contentToUpdate
 
-           if(contentToUpdate === undefined) return resolver.badRequest( {contentToUpdate}, 'missing_content')
-           
            await client.connect()
         
            const updatedContent = await client.db('instagram').collection('userPost').updateOne(
@@ -134,8 +134,8 @@ const resolver = Resolver(res)
                 ,(error, data) => {
 
                     if(error) return resolver.internalServerError(error, 'mongodb error')
-                
-                    return resolver.success(data, 'succesfully updated')
+                    if(data.acknowledged !== true || data.modifiedCount !== 1) return resolver.notFound(data, 'document_to_update_not_found')
+                    return resolver.success(data, 'succesfully_updated')
             }
             )
        
@@ -148,6 +148,7 @@ const resolver = Resolver(res)
 deletePost : async( req, res ) => {
     const resolver = Resolver(res)
     try {
+        if(req.body.postId === undefined) return resolver.badRequest( {contentToUpdate}, 'missing_postId')
         const id = req.body.postId
         
         const postId =  new ObjectId(id)
@@ -159,21 +160,19 @@ deletePost : async( req, res ) => {
             {_id : postId}
         )
         
-        if(deleteFromMongo.value === null) return resolver.badRequest(deleteFromMongo, 'could not delete post')
+        if(deleteFromMongo.value === null) return resolver.notFound(deleteFromMongo, 'could_not_delete_post')
         
         const arrayKeys = deleteFromMongo.value.contentPost.uploadedKeys
         console.log('this is the array of keys to delete', arrayKeys)
         const deleteFromAwsArray = await bucket.deleteImagesAws(arrayKeys)
 
         
-        return resolver.success(deleteFromAwsArray, 'post deleted succesfully')
-
-        
-        
+        return resolver.success(deleteFromAwsArray, 'succesfully_deleted')
+    
     } 
     catch (error) {
         console.log('problem with the id',error.message)  
-        return  resolver.badRequest(error.name, error.message)
+        return  resolver.internalServerError(error, error.message)
     }
 },
 findLast : async(req, res) =>{

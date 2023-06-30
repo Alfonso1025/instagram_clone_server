@@ -14,7 +14,7 @@ router.post('/multiple', multer.array('multiInputFile'), controller.multiPost)
  *  post:
  *     tags:
  *     - UserPost
- *     summary: saves contentString to db and uploads multimedia to aws
+ *     summary: The user post a content string and multiple images. The content string is stored in the database. the images are uploaded to s3 bucket. The keys to the images, produced by s3 bucket are stored in the database.
  *     requestBody:
  *      required: true
  *      content:
@@ -107,7 +107,7 @@ router.get('/getPostsFromFollowingUsers/:userId', controller.getPostsFromFollowi
  *  get:
  *     tags:
  *     - UserPost
- *     summary: retrives posts made by users followed by logged in user
+ *     summary: retrives posts made by users followed by the logged in user
  *     parameters:
  *     - in : path
  *       name: userId
@@ -115,11 +115,60 @@ router.get('/getPostsFromFollowingUsers/:userId', controller.getPostsFromFollowi
  *          type: string
  *     responses:
  *      200:
- *        description: success retriving posts
- *      401:
- *        description: unauthorized
+ *        description: success in retrieving posts of users followed by the logged in user.
+ *        content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum: 
+ *                     - retrieved_post_from_users_followed_by_user_userEmail
+ *                 data:
+ *                   type: object
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                    - 200
+ *      404:
+ *        description: Not found. The user was not found/The user does not follow anyone/No posts where found
+ *        content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum: 
+ *                     - user_not_found/user_is_not_following_anyone/no_posts_found
+ *                 data:
+ *                   type: object
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                    - 404
  *      
- *      
+ *      500:
+ *        description: Internal server error. Mongo db or aws s3 bucket error
+ *        content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum: 
+ *                    - mongodb_error
+ *                 data:
+ *                   type: object
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                    - 500     
  *        
  */
 router.put('/', controller.updatePost)
@@ -151,11 +200,78 @@ router.put('/', controller.updatePost)
  *     responses:
  *      200:
  *        description: The content string of the post was updated.
+ *        content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum: 
+ *                     - succesfully_updated
+ *                 data:
+ *                   type: object
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                    - 200
  *      400:
- *        description: bad request
- *       
+ *        description: bad request. The request is missing either the postId or the content string
+ *        content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum: 
+ *                     - missing_postId/missing_content
+ *                 data:
+ *                   type: object
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                    - 400
+ *      404:
+ *        description: Not found. The post to update was not found and thus was not updated
+ *        content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum: 
+ *                     - document_to_update_not_found
+ *                 data:
+ *                   type: object
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                    - 404
+ *             
  *      500:
  *        description: server error
+ *        content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum: 
+ *                    - mongodb_error
+ *                 data:
+ *                   type: object
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                    - 500     
+ *        
  */
 router.delete('/', controller.deletePost)
 /**
@@ -185,11 +301,78 @@ router.delete('/', controller.deletePost)
  *     responses:
  *      200:
  *        description: The post was deleted
+ *        content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum: 
+ *                     - succesfully_deleted
+ *                 data:
+ *                   type: object
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                    - 200
  *      400:
- *        description: bad request
- *       
+ *        description: bad request. The request is missing the postId
+ *        content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum: 
+ *                     - missing_postId
+ *                 data:
+ *                   type: object
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                    - 400
+ *      404:
+ *        description: Not found. The post to delete was not found and thus was not updated
+ *        content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum: 
+ *                     - could_not_delete_post
+ *                 data:
+ *                   type: object
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                    - 404
+ *                   
  *      500:
- *        description: server error
+ *        description: Internal server error
+ *        content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum: 
+ *                    - mongodb_error
+ *                 data:
+ *                   type: object
+ *                 
+ *                 code:
+ *                   type: number
+ *                   enum:
+ *                    - 500   
+ * 
  */
 
 router.put('/testFindLast', controller.findLast)

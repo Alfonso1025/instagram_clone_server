@@ -9,7 +9,7 @@ module.exports = {
             await client.connect()
             const query = await client.db('instagram').collection('users').find().toArray()
             const allUsers = []
-            if(query.length < 1 ) return resolver.internalServerError(null, 'could_not_find_users')
+            if(query.length < 1 ) return resolver.notFound(null, 'could_not_find_users')
             let i = 0
             while(i < query.length){ 
 
